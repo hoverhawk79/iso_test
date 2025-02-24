@@ -17,22 +17,13 @@ jobs:
         run: wget -O iso20022.xml "https://danskeci.com/-/media/pdf/danskeci-com/iso-20022-xml/camt052_accountentries_example_fi.xml"
 
       - name: Read ISO20022 content
-        id: read-file
         run: |
-          content=$(cat iso20022.xml | base64 -w 0)
-          echo "encoded_content=$content" >> $GITHUB_ENV
-
-      - name: Decode and format content
-        run: |
-          echo "$encoded_content" | base64 -d > formatted_iso20022.xml
+          echo '```xml' > formatted_iso20022.xml
+          cat iso20022.xml >> formatted_iso20022.xml
+          echo '```' >> formatted_iso20022.xml
 
       - name: Post comment to PR
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          COMMENT=$(cat formatted_iso20022.xml | jq -Rs .)
-          PR_URL="${{ github.event.pull_request.comments_url }}"
-          curl -s -X POST "$PR_URL" \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            -d "{\"body\": $COMMENT}"
+          gh pr comment ${{ github.event.pull_request.number }} --body "$(cat formatted_iso20022.xml)"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
