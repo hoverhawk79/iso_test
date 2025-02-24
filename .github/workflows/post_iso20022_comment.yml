@@ -1,0 +1,29 @@
+name: Post ISO20022 Comment to PR
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  pull-requests: write  # 确保 GITHUB_TOKEN 具有写权限
+
+jobs:
+  post_comment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download ISO20022 XML
+        run: wget -O iso20022.xml "https://danskeci.com/-/media/pdf/danskeci-com/iso-20022-xml/camt052_accountentries_example_fi.xml"
+
+      - name: Post to GitHub PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          MESSAGE=$(cat iso20022.xml | head -n 20)  # 只取前 20 行，避免超长
+          PAYLOAD=$(jq -n --arg body "$MESSAGE" '{body: $body}')
+          curl -X POST -H "Authorization: token $GITHUB_TOKEN" \
+               -H "Accept: application/vnd.github.v3+json" \
+               https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments \
+               -d "$PAYLOAD"
