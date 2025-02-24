@@ -23,7 +23,12 @@ jobs:
           echo '```' >> formatted_iso20022.xml
 
       - name: Post comment to PR
-        run: |
-          gh pr comment ${{ github.event.pull_request.number }} --body "$(cat formatted_iso20022.xml)"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          COMMENT=$(jq -Rs . < formatted_iso20022.xml)
+          PR_URL="${{ github.event.pull_request.comments_url }}"
+          curl -s -X POST "$PR_URL" \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -d "{\"body\": $COMMENT}"
