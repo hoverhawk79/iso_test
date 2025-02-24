@@ -24,7 +24,7 @@ jobs:
 
       - name: Post comment to PR
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           COMMENT=$(jq -Rs . < formatted_iso20022.xml)
           PR_URL="${{ github.event.pull_request.comments_url }}"
